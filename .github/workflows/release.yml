@@ -1,0 +1,44 @@
+name: 'Release'
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: 'Setup Variables'
+        id: vars
+        run: |
+          echo "VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
+          echo "PRERELEASE=`[[ ${GITHUB_REF#refs/*/v*-} == ${GITHUB_REF} ]] && echo 'false' || echo 'true'`" >> $GITHUB_ENV
+          echo "CONFIGURATION=`[[ ${GITHUB_REF#refs/*/v*-} == ${GITHUB_REF} ]] && echo 'Release' || echo 'Debug'`" >> $GITHUB_ENV
+        shell: bash
+      - name: 'Setup .NET'
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 6.0.x
+      - name: 'Restore .NET dependencies'
+        run: dotnet restore --nologo
+      - name: 'Run Tests'
+        run: dotnet test --no-restore BootstrapIcons.AspNetCore.Tests/BootstrapIcons.AspNetCore.Tests.csproj
+      - name: 'Build NuGet packages'
+        run: |
+          dotnet pack --no-restore --configuration ${{ env.CONFIGURATION }} -p:Version="${{ env.VERSION }}" -p:PackageVersion="${{ env.VERSION }}" src/ViteIntegration/ViteIntegration.csproj
+      - name: 'Publish NuGet packages'
+        run: |
+          dotnet nuget push src/ViteIntegration/bin/${{ env.CONFIGURATION }}/ViteIntegration.${{ env.VERSION }}.nupkg -k ${{ secrets.NUGET_TOKEN }} -s "https://api.nuget.org/v3/index.json"
+      - name: 'Release'
+        uses: softprops/action-gh-release@v1
+        with:
+          prerelease: ${{ env.PRERELEASE }}
+          generate_release_notes: true
+          files: |
+            LICENSE
+            src/ViteIntegration/bin/${{ env.CONFIGURATION }}/ViteIntegration.${{ env.VERSION }}.nupkg

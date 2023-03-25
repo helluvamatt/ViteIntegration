@@ -12,6 +12,17 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViteIntegration.Tests", "test\ViteIntegration.Tests\ViteIntegration.Tests.csproj", "{80399969-BAA5-4F76-9E6B-F873CD8DA731}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{419E7CB1-8F27-4D56-98BD-223056202BD5}"
+    ProjectSection(SolutionItems) = preProject
+        .github\release.yml = .github\release.yml
+        .github\dependabot.yml = .github\dependabot.yml
+    EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{44C77EC2-8236-4A96-B70F-E5B8C9E39001}"
+    ProjectSection(SolutionItems) = preProject
+        .github\workflows\pr.yml = .github\workflows\pr.yml
+        .github\workflows\release.yml = .github\workflows\release.yml
+        .github\workflows\tests.yml = .github\workflows\tests.yml
+    EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,5 +41,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{419E7CB1-8F27-4D56-98BD-223056202BD5} = {86312F8C-224F-4E9C-9C61-121FF03F6693}
+		{F869B652-9427-48B9-9C2D-4DC2738FC4DF} = {419E7CB1-8F27-4D56-98BD-223056202BD5}
+		{44C77EC2-8236-4A96-B70F-E5B8C9E39001} = {419E7CB1-8F27-4D56-98BD-223056202BD5}
 	EndGlobalSection
 EndGlobal

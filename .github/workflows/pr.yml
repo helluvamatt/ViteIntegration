@@ -1,0 +1,28 @@
+name: 'Acceptance'
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+      - name: 'Setup .NET'
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 6.0.x
+      - name: 'Build'
+        run: dotnet build --nologo ViteIntegration.sln
+      - name: 'Test'
+        run: dotnet test --nologo --no-build --logger "trx;LogFileName=ViteIntegration.Tests.trx" --results-directory . tests/ViteIntegration.Tests/ViteIntegration.Tests.csproj
+      - name: 'Upload Test Results'
+        uses: actions/upload-artifact@v3
+        if: ${{ always() }}
+        with:
+          name: test-results
+          path: '*.trx'
