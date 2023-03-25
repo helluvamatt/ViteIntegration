@@ -19,7 +19,7 @@ jobs:
       - name: 'Build'
         run: dotnet build --nologo ViteIntegration.sln
       - name: 'Test'
-        run: dotnet test --nologo --no-build --logger "trx;LogFileName=ViteIntegration.Tests.trx" --results-directory . tests/ViteIntegration.Tests/ViteIntegration.Tests.csproj
+        run: dotnet test --nologo --no-build --logger "trx;LogFileName=ViteIntegration.Tests.trx" --results-directory . test/ViteIntegration.Tests/ViteIntegration.Tests.csproj
       - name: 'Upload Test Results'
         uses: actions/upload-artifact@v3
         if: ${{ always() }}
