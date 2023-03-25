@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{86312F8C-224F-4E9C-9C61-121FF03F6693}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		LICENSE = LICENSE
+		.gitignore = .gitignore
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViteIntegration", "src\ViteIntegration\ViteIntegration.csproj", "{47878216-3B3E-454F-8CBA-A17B24C2E4CB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViteIntegration.Tests", "test\ViteIntegration.Tests\ViteIntegration.Tests.csproj", "{80399969-BAA5-4F76-9E6B-F873CD8DA731}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{419E7CB1-8F27-4D56-98BD-223056202BD5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{47878216-3B3E-454F-8CBA-A17B24C2E4CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47878216-3B3E-454F-8CBA-A17B24C2E4CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47878216-3B3E-454F-8CBA-A17B24C2E4CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47878216-3B3E-454F-8CBA-A17B24C2E4CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80399969-BAA5-4F76-9E6B-F873CD8DA731}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80399969-BAA5-4F76-9E6B-F873CD8DA731}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80399969-BAA5-4F76-9E6B-F873CD8DA731}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80399969-BAA5-4F76-9E6B-F873CD8DA731}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{419E7CB1-8F27-4D56-98BD-223056202BD5} = {86312F8C-224F-4E9C-9C61-121FF03F6693}
+	EndGlobalSection
+EndGlobal
