@@ -14,7 +14,8 @@
         <Description>Vite integration for ASP.NET Core</Description>
         <RepositoryType>git</RepositoryType>
         <RepositoryUrl>https://github.com/helluvamatt/ViteIntegration</RepositoryUrl>
-        <PackageReadmeFile>../../README.md</PackageReadmeFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <Version>0.0.0-dev</Version>
 
     </PropertyGroup>
 
