@@ -6,6 +6,16 @@
         <Nullable>enable</Nullable>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Authors>Matt Schneeberger</Authors>
+        <PackageProjectUrl>https://github.com/helluvamatt/ViteIntegration</PackageProjectUrl>
+        <PackageTags>vite frontend aspnetcore</PackageTags>
+        <Description>Vite integration for ASP.NET Core</Description>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/helluvamatt/ViteIntegration</RepositoryUrl>
+        <PackageReadmeFile>../../README.md</PackageReadmeFile>
+
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,9 +27,13 @@
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
-    
+
     <ItemGroup>
         <InternalsVisibleTo Include="$(AssemblyName).Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Link="README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 
 </Project>
