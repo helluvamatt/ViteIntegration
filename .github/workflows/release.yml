@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: 'Setup Variables'
         id: vars
         run: |
@@ -24,9 +24,9 @@ jobs:
           echo "CONFIGURATION=`[[ ${GITHUB_REF#refs/*/v*-} == ${GITHUB_REF} ]] && echo 'Release' || echo 'Debug'`" >> $GITHUB_ENV
         shell: bash
       - name: 'Setup .NET'
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 8.0.x
       - name: 'Restore .NET dependencies'
         run: dotnet restore --nologo
       - name: 'Run Tests'
@@ -38,7 +38,7 @@ jobs:
         run: |
           dotnet nuget push src/ViteIntegration/bin/${{ env.CONFIGURATION }}/ViteIntegration.${{ env.VERSION }}.nupkg -k ${{ secrets.NUGET_TOKEN }} -s "https://api.nuget.org/v3/index.json"
       - name: 'Release'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           prerelease: ${{ env.PRERELEASE }}
           generate_release_notes: true
