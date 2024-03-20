@@ -19,12 +19,13 @@ public class AssetTagHelperComponentTests
         ViewContext viewContext = new();
         viewContext.RequireViteAssets("foo");
         IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(new ViteConfiguration());
-        AssetTagHelperComponent assetTagHelperComponent = new(options, dev)
+        IViteAssetService viteAssetService = new DefaultViteAssetService(options, dev);
+        AssetTagHelperComponent assetTagHelperComponent = new(viteAssetService)
         {
             ViewContext = viewContext
         };
-        TagHelperOutput output = new("head", new TagHelperAttributeList(), [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
-        ViteAsset asset = new() { File = "foo.js", Css = new[] { "site.css" } };
+        TagHelperOutput output = new("head", [], [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
+        ViteAsset asset = new() { File = "foo.js", Css = ["site.css"] };
 
         // Act
         assetTagHelperComponent.ProcessHead(output, new []{ asset });
@@ -42,13 +43,14 @@ public class AssetTagHelperComponentTests
         // Arrange
         IHostEnvironment dev = new HostingEnvironment { EnvironmentName = Environments.Development };
         ViewContext viewContext = new();
-        IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(new ViteConfiguration { ViteDevServerUrl = "http://localhost:3000" });
-        AssetTagHelperComponent assetTagHelperComponent = new(options, dev)
+        IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(new ViteConfiguration { ViteDevServerUrl = new Uri("http://localhost:3000") });
+        IViteAssetService viteAssetService = new DefaultViteAssetService(options, dev);
+        AssetTagHelperComponent assetTagHelperComponent = new(viteAssetService)
         {
             ViewContext = viewContext
         };
-        TagHelperOutput output = new("head", new TagHelperAttributeList(), [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
-        ViteAsset asset = new() { File = "foo.js", Css = new[] { "site.css" } };
+        TagHelperOutput output = new("head", [], [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
+        ViteAsset asset = new() { File = "foo.js", Css = ["site.css"] };
 
         // Act
         assetTagHelperComponent.ProcessHead(output, new[] { asset });
@@ -66,11 +68,12 @@ public class AssetTagHelperComponentTests
         ViewContext viewContext = new();
         viewContext.RequireViteAssets("foo");
         IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(new ViteConfiguration());
-        AssetTagHelperComponent assetTagHelperComponent = new(options, dev)
+        IViteAssetService viteAssetService = new DefaultViteAssetService(options, dev);
+        AssetTagHelperComponent assetTagHelperComponent = new(viteAssetService)
         {
             ViewContext = viewContext
         };
-        TagHelperOutput output = new("head", new TagHelperAttributeList(), [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
+        TagHelperOutput output = new("head", [], [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
         ViteAsset asset = new() { File = "foo.js" };
 
         // Act
@@ -88,12 +91,13 @@ public class AssetTagHelperComponentTests
         ViewContext viewContext = new();
         viewContext.RequireViteAssets("foo");
         IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(new ViteConfiguration());
-        AssetTagHelperComponent assetTagHelperComponent = new(options, dev)
+        IViteAssetService viteAssetService = new DefaultViteAssetService(options, dev);
+        AssetTagHelperComponent assetTagHelperComponent = new(viteAssetService)
         {
             ViewContext = viewContext
         };
-        TagHelperOutput output = new("body", new TagHelperAttributeList(), [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
-        ViteAsset asset = new() { File = "foo.js", Css = new[] { "site.css", "button.css" } };
+        TagHelperOutput output = new("body", [], [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
+        ViteAsset asset = new() { File = "foo.js", Css = ["site.css", "button.css"] };
 
         // Act
         assetTagHelperComponent.ProcessBody(output, new[] { asset });
@@ -102,7 +106,59 @@ public class AssetTagHelperComponentTests
         output.PostContent.IsModified.Should().BeTrue();
         StringWriter stringWriter = new();
         output.WriteTo(stringWriter, new HtmlTestEncoder());
-        stringWriter.ToString().Should().Be("<body><script type=\"text/javascript\" src=\"/foo.js\"></script></body>");
+        stringWriter.ToString().Should().Be("<body><script type=\"module\" src=\"/foo.js\"></script></body>");
+    }
+
+    [Test]
+    public void Test_ProcessBody_ScriptModeDefer()
+    {
+        // Arrange
+        IHostEnvironment dev = new HostingEnvironment { EnvironmentName = Environments.Development };
+        ViewContext viewContext = new();
+        viewContext.RequireViteAssets("foo");
+        IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(new ViteConfiguration { ScriptMode = ScriptMode.Defer });
+        IViteAssetService viteAssetService = new DefaultViteAssetService(options, dev);
+        AssetTagHelperComponent assetTagHelperComponent = new(viteAssetService)
+        {
+            ViewContext = viewContext
+        };
+        TagHelperOutput output = new("body", [], [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
+        ViteAsset asset = new() { File = "foo.js", Css = ["site.css", "button.css"] };
+
+        // Act
+        assetTagHelperComponent.ProcessBody(output, new[] { asset });
+
+        // Assert
+        output.PostContent.IsModified.Should().BeTrue();
+        StringWriter stringWriter = new();
+        output.WriteTo(stringWriter, new HtmlTestEncoder());
+        stringWriter.ToString().Should().Be("<body><script type=\"text/javascript\" defer src=\"/foo.js\"></script></body>");
+    }
+
+    [Test]
+    public void Test_ProcessBody_ScriptModeAsync()
+    {
+        // Arrange
+        IHostEnvironment dev = new HostingEnvironment { EnvironmentName = Environments.Development };
+        ViewContext viewContext = new();
+        viewContext.RequireViteAssets("foo");
+        IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(new ViteConfiguration { ScriptMode = ScriptMode.Async });
+        IViteAssetService viteAssetService = new DefaultViteAssetService(options, dev);
+        AssetTagHelperComponent assetTagHelperComponent = new(viteAssetService)
+        {
+            ViewContext = viewContext
+        };
+        TagHelperOutput output = new("body", [], [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
+        ViteAsset asset = new() { File = "foo.js", Css = ["site.css", "button.css"] };
+
+        // Act
+        assetTagHelperComponent.ProcessBody(output, new[] { asset });
+
+        // Assert
+        output.PostContent.IsModified.Should().BeTrue();
+        StringWriter stringWriter = new();
+        output.WriteTo(stringWriter, new HtmlTestEncoder());
+        stringWriter.ToString().Should().Be("<body><script type=\"text/javascript\" async src=\"/foo.js\"></script></body>");
     }
 
     [Test]
@@ -112,13 +168,14 @@ public class AssetTagHelperComponentTests
         IHostEnvironment dev = new HostingEnvironment { EnvironmentName = Environments.Development };
         ViewContext viewContext = new();
         viewContext.RequireViteAssets("foo");
-        IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(new ViteConfiguration { ViteDevServerUrl = "http://localhost:3000" });
-        AssetTagHelperComponent assetTagHelperComponent = new(options, dev)
+        IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(new ViteConfiguration { ViteDevServerUrl = new Uri("http://localhost:3000") });
+        IViteAssetService viteAssetService = new DefaultViteAssetService(options, dev);
+        AssetTagHelperComponent assetTagHelperComponent = new(viteAssetService)
         {
             ViewContext = viewContext
         };
-        TagHelperOutput output = new("body", new TagHelperAttributeList(), [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
-        ViteAsset asset = new() { Src = "foo", File = "foo.js", Css = new[] { "site.css", "button.css" } };
+        TagHelperOutput output = new("body", [], [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
+        ViteAsset asset = new() { Src = "foo", File = "foo.js", Css = ["site.css", "button.css"] };
 
         // Act
         assetTagHelperComponent.ProcessBody(output, new[] { asset });
@@ -142,11 +199,12 @@ public class AssetTagHelperComponentTests
             { "foo", new ViteAsset { File = "foo.js" } }
         };
         IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(new ViteConfiguration { Assets = assets });
-        AssetTagHelperComponent assetTagHelperComponent = new(options, dev)
+        IViteAssetService viteAssetService = new DefaultViteAssetService(options, dev);
+        AssetTagHelperComponent assetTagHelperComponent = new(viteAssetService)
         {
             ViewContext = viewContext
         };
-        TagHelperContext context = new("body", new TagHelperAttributeList(), new Dictionary<object, object>(), Guid.NewGuid().ToString());
+        TagHelperContext context = new("body", [], new Dictionary<object, object>(), Guid.NewGuid().ToString());
 
         // Act
         Action actual = () => assetTagHelperComponent.Init(context);
@@ -162,7 +220,8 @@ public class AssetTagHelperComponentTests
         IHostEnvironment dev = new HostingEnvironment { EnvironmentName = Environments.Development };
         ViewContext viewContext = new();
         IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(new ViteConfiguration());
-        AssetTagHelperComponent assetTagHelperComponent = new(options, dev)
+        IViteAssetService viteAssetService = new DefaultViteAssetService(options, dev);
+        AssetTagHelperComponent assetTagHelperComponent = new(viteAssetService)
         {
             ViewContext = viewContext
         };
@@ -182,19 +241,20 @@ public class AssetTagHelperComponentTests
         {
             Assets = new Dictionary<string, ViteAsset>
             {
-                { "foo", new ViteAsset { File = "foo.js", Css = new[] { "site.css" } } }
+                { "foo", new ViteAsset { File = "foo.js", Css = ["site.css"] } }
             }
         };
         IHostEnvironment dev = new HostingEnvironment { EnvironmentName = Environments.Development };
         ViewContext viewContext = new();
         viewContext.RequireViteAssets("foo");
         IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(configuration);
-        AssetTagHelperComponent assetTagHelperComponent = new(options, dev)
+        IViteAssetService viteAssetService = new DefaultViteAssetService(options, dev);
+        AssetTagHelperComponent assetTagHelperComponent = new(viteAssetService)
         {
             ViewContext = viewContext
         };
-        TagHelperContext context = new("head", new TagHelperAttributeList(), new Dictionary<object, object>(), Guid.NewGuid().ToString());
-        TagHelperOutput output = new("head", new TagHelperAttributeList(), [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
+        TagHelperContext context = new("head", [], new Dictionary<object, object>(), Guid.NewGuid().ToString());
+        TagHelperOutput output = new("head", [], [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
         assetTagHelperComponent.Init(context);
 
         // Act
@@ -215,19 +275,20 @@ public class AssetTagHelperComponentTests
         {
             Assets = new Dictionary<string, ViteAsset>
             {
-                { "foo", new ViteAsset { File = "foo.js", Css = new[] { "site.css" } } }
+                { "foo", new ViteAsset { File = "foo.js", Css = ["site.css"] } }
             }
         };
         IHostEnvironment dev = new HostingEnvironment { EnvironmentName = Environments.Development };
         ViewContext viewContext = new();
         viewContext.RequireViteAssets("foo");
         IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(configuration);
-        AssetTagHelperComponent assetTagHelperComponent = new(options, dev)
+        IViteAssetService viteAssetService = new DefaultViteAssetService(options, dev);
+        AssetTagHelperComponent assetTagHelperComponent = new(viteAssetService)
         {
             ViewContext = viewContext
         };
-        TagHelperContext context = new("body", new TagHelperAttributeList(), new Dictionary<object, object>(), Guid.NewGuid().ToString());
-        TagHelperOutput output = new("body", new TagHelperAttributeList(), [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
+        TagHelperContext context = new("body", [], new Dictionary<object, object>(), Guid.NewGuid().ToString());
+        TagHelperOutput output = new("body", [], [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
         assetTagHelperComponent.Init(context);
 
         // Act
@@ -237,7 +298,7 @@ public class AssetTagHelperComponentTests
         output.PostContent.IsModified.Should().BeTrue();
         StringWriter stringWriter = new();
         output.WriteTo(stringWriter, new HtmlTestEncoder());
-        stringWriter.ToString().Should().Be("<body><script type=\"text/javascript\" src=\"/foo.js\"></script></body>");
+        stringWriter.ToString().Should().Be("<body><script type=\"module\" src=\"/foo.js\"></script></body>");
     }
 
     [Test]
@@ -248,18 +309,19 @@ public class AssetTagHelperComponentTests
         {
             Assets = new Dictionary<string, ViteAsset>
             {
-                { "foo", new ViteAsset { File = "foo.js", Css = new[] { "site.css" } } }
+                { "foo", new ViteAsset { File = "foo.js", Css = ["site.css"] } }
             }
         };
         IHostEnvironment dev = new HostingEnvironment { EnvironmentName = Environments.Development };
         ViewContext viewContext = new();
         viewContext.RequireViteAssets("foo");
         IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(configuration);
-        AssetTagHelperComponent assetTagHelperComponent = new(options, dev)
+        IViteAssetService viteAssetService = new DefaultViteAssetService(options, dev);
+        AssetTagHelperComponent assetTagHelperComponent = new(viteAssetService)
         {
             ViewContext = viewContext
         };
-        TagHelperContext context = new("body", new TagHelperAttributeList(), new Dictionary<object, object>(), Guid.NewGuid().ToString());
+        TagHelperContext context = new("body", [], new Dictionary<object, object>(), Guid.NewGuid().ToString());
         assetTagHelperComponent.Init(context);
 
         // Act
@@ -277,19 +339,20 @@ public class AssetTagHelperComponentTests
         {
             Assets = new Dictionary<string, ViteAsset>
             {
-                { "foo", new ViteAsset { File = "foo.js", Css = new[] { "site.css" } } }
+                { "foo", new ViteAsset { File = "foo.js", Css = ["site.css"] } }
             }
         };
         IHostEnvironment dev = new HostingEnvironment { EnvironmentName = Environments.Development };
         ViewContext viewContext = new();
         viewContext.RequireViteAssets("foo");
         IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(configuration);
-        AssetTagHelperComponent assetTagHelperComponent = new(options, dev)
+        IViteAssetService viteAssetService = new DefaultViteAssetService(options, dev);
+        AssetTagHelperComponent assetTagHelperComponent = new(viteAssetService)
         {
             ViewContext = viewContext
         };
-        TagHelperContext context = new("body", new TagHelperAttributeList(), new Dictionary<object, object>(), Guid.NewGuid().ToString());
-        TagHelperOutput output = new("body", new TagHelperAttributeList(), [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
+        TagHelperContext context = new("body", [], new Dictionary<object, object>(), Guid.NewGuid().ToString());
+        TagHelperOutput output = new("body", [], [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
 
         // Act
         Action action = () => assetTagHelperComponent.Process(context, output);
@@ -306,19 +369,20 @@ public class AssetTagHelperComponentTests
         {
             Assets = new Dictionary<string, ViteAsset>
             {
-                { "foo", new ViteAsset { File = "foo.js", Css = new[] { "site.css" } } }
+                { "foo", new ViteAsset { File = "foo.js", Css = ["site.css"] } }
             }
         };
         IHostEnvironment dev = new HostingEnvironment { EnvironmentName = Environments.Development };
         ViewContext viewContext = new();
         viewContext.RequireViteAssets("foo");
         IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(configuration);
-        AssetTagHelperComponent assetTagHelperComponent = new(options, dev)
+        IViteAssetService viteAssetService = new DefaultViteAssetService(options, dev);
+        AssetTagHelperComponent assetTagHelperComponent = new(viteAssetService)
         {
             ViewContext = viewContext
         };
-        TagHelperContext context = new("body", new TagHelperAttributeList(), new Dictionary<object, object>(), Guid.NewGuid().ToString());
-        TagHelperOutput output = new("body", new TagHelperAttributeList(), [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
+        TagHelperContext context = new("body", [], new Dictionary<object, object>(), Guid.NewGuid().ToString());
+        TagHelperOutput output = new("body", [], [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
         assetTagHelperComponent.Init(context);
 
         // Act
@@ -336,19 +400,20 @@ public class AssetTagHelperComponentTests
         {
             Assets = new Dictionary<string, ViteAsset>
             {
-                { "foo", new ViteAsset { File = "foo.js", Css = new[] { "site.css" } } }
+                { "foo", new ViteAsset { File = "foo.js", Css = ["site.css"] } }
             }
         };
         IHostEnvironment dev = new HostingEnvironment { EnvironmentName = Environments.Development };
         ViewContext viewContext = new();
         viewContext.RequireViteAssets("foo");
         IOptions<ViteConfiguration> options = new OptionsWrapper<ViteConfiguration>(configuration);
-        AssetTagHelperComponent assetTagHelperComponent = new(options, dev)
+        IViteAssetService viteAssetService = new DefaultViteAssetService(options, dev);
+        AssetTagHelperComponent assetTagHelperComponent = new(viteAssetService)
         {
             ViewContext = viewContext
         };
-        TagHelperContext context = new("table", new TagHelperAttributeList(), new Dictionary<object, object>(), Guid.NewGuid().ToString());
-        TagHelperOutput output = new("table", new TagHelperAttributeList(), [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
+        TagHelperContext context = new("table", [], new Dictionary<object, object>(), Guid.NewGuid().ToString());
+        TagHelperOutput output = new("table", [], [ExcludeFromCodeCoverage] (_, _) => Task.FromResult((TagHelperContent)new DefaultTagHelperContent()));
         assetTagHelperComponent.Init(context);
 
         // Act

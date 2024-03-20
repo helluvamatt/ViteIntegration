@@ -2,25 +2,16 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 
 namespace ViteIntegration.Internals;
 
-internal class AssetTagHelperComponent : TagHelperComponent
+internal class AssetTagHelperComponent(IViteAssetService viteAssetService) : TagHelperComponent
 {
     private const string ContextKey = "__ViteIntegration_Assets";
     private const string HtmlTagBody = "body";
     private const string HtmlTagHead = "head";
 
-    private readonly IOptions<ViteConfiguration> configuration;
-    private readonly IHostEnvironment hostEnvironment;
-
-    public AssetTagHelperComponent(IOptions<ViteConfiguration> configuration, IHostEnvironment hostEnvironment)
-    {
-        this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        this.hostEnvironment = hostEnvironment ?? throw new ArgumentNullException(nameof(hostEnvironment));
-    }
+    private readonly IViteAssetService viteAssetService = viteAssetService ?? throw new ArgumentNullException(nameof(viteAssetService));
 
     [ViewContext]
     public ViewContext ViewContext { get; set; } = default!;
@@ -32,16 +23,16 @@ internal class AssetTagHelperComponent : TagHelperComponent
 
     public override void Init(TagHelperContext context)
     {
-        if (context is null) throw new ArgumentNullException(nameof(context));
+        ArgumentNullException.ThrowIfNull(context);
 
         // Validate assets and add them to the context
-        HashSet<string> assetNames = new();
-        assetNames.UnionWith(configuration.Value.DefaultAssets);
+        HashSet<string> assetNames = [];
+        assetNames.UnionWith(viteAssetService.DefaultAssets);
         assetNames.UnionWith(ViewContext.GetAssetNames());
-        List<ViteAsset> assets = new();
+        List<ViteAsset> assets = [];
         foreach (string assetName in assetNames)
         {
-            if (!configuration.Value.Assets.TryGetValue(assetName, out ViteAsset? asset)) throw new InvalidOperationException("Asset not found: " + assetName);
+            if (!viteAssetService.TryGetAsset(assetName, out ViteAsset? asset)) throw new InvalidOperationException("Asset not found: " + assetName);
             assets.Add(asset);
         }
         context.Items[ContextKey] = assets;
@@ -49,8 +40,8 @@ internal class AssetTagHelperComponent : TagHelperComponent
 
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
-        if (context is null) throw new ArgumentNullException(nameof(context));
-        if (output is null) throw new ArgumentNullException(nameof(output));
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(output);
         string tagName = context.TagName.ToLowerInvariant();
         if (tagName != HtmlTagHead && tagName != HtmlTagBody) return;
         if (!context.Items.TryGetValue(ContextKey, out object? assetsObj) || assetsObj is not List<ViteAsset> assets) throw new InvalidOperationException("Assets not found in context");
@@ -69,13 +60,13 @@ internal class AssetTagHelperComponent : TagHelperComponent
 
     internal void ProcessHead(TagHelperOutput output, IEnumerable<ViteAsset> assets)
     {
-        if (hostEnvironment.IsDevelopment() && !string.IsNullOrEmpty(configuration.Value.ViteDevServerUrl)) return;
+        if (viteAssetService.UseViteDevServer) return;
         foreach (ViteAsset asset in assets)
         {
             if (asset.Css is null) continue;
             foreach (string cssFile in asset.Css)
             {
-                string cssUrl = cssFile.StartsWith("/") ? cssFile : $"/{cssFile}";
+                string cssUrl = cssFile.StartsWith('/') ? cssFile : $"/{cssFile}";
                 output.PostContent.AppendHtml($"<link rel=\"stylesheet\" href=\"{cssUrl}\">");
             }
         }
@@ -83,31 +74,33 @@ internal class AssetTagHelperComponent : TagHelperComponent
 
     internal void ProcessBody(TagHelperOutput output, IEnumerable<ViteAsset> assets)
     {
-        if (hostEnvironment.IsDevelopment() && !string.IsNullOrEmpty(configuration.Value.ViteDevServerUrl))
+        if (viteAssetService.UseViteDevServer)
         {
             // Development mode: Use vite dev server
-            Uri baseUri = new(configuration.Value.ViteDevServerUrl, UriKind.Absolute);
-
             // Write @vite/client
-            Uri viteClientUri = new(baseUri, "/@vite/client");
-            output.PostContent.AppendHtml($"<script type=\"module\" src=\"{viteClientUri}\"></script>");
-
-            // Write required assets
-            foreach (ViteAsset asset in assets)
-            {
-                Uri assetUri = new(baseUri, asset.Src);
-                output.PostContent.AppendHtml($"<script type=\"module\" src=\"{assetUri}\"></script>");
-            }
-
-            return;
+            output.PostContent.AppendHtml($"<script type=\"module\" src=\"{viteAssetService.ViteClientUri}\"></script>");
         }
 
-        // Production mode: Use bundled assets from manifest
+        // Write required assets
+        string scriptType = viteAssetService.ScriptMode switch
+        {
+            ScriptMode.Module => "module",
+            ScriptMode.ModuleAsync => "module",
+            ScriptMode.Defer => "text/javascript",
+            ScriptMode.Async => "text/javascript",
+            ScriptMode.Classic => "text/javascript",
+            _ => throw new InvalidOperationException("Unknown ScriptMode: " + viteAssetService.ScriptMode)
+        };
+        string scriptAttrs = viteAssetService.ScriptMode switch
+        {
+            ScriptMode.ModuleAsync => " async",
+            ScriptMode.Defer => " defer",
+            ScriptMode.Async => " async",
+            _ => ""
+        };
         foreach (ViteAsset asset in assets)
         {
-            string assetUrl = asset.File;
-            if (!assetUrl.StartsWith("/")) assetUrl = $"/{assetUrl}";
-            output.PostContent.AppendHtml($"<script type=\"text/javascript\" src=\"{assetUrl}\"></script>");
+            output.PostContent.AppendHtml($"<script type=\"{scriptType}\"{scriptAttrs} src=\"{viteAssetService.GetAssetUrl(asset)}\"></script>");
         }
     }
 }

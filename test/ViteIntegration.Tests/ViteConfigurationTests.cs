@@ -11,8 +11,7 @@ public class ViteConfigurationTests
         configuration.Assets.Should().BeEmpty();
         configuration.DefaultAssets.Should().BeEmpty();
         configuration.ViteDevServerUrl.Should().BeNull();
-        configuration.IsScriptModule.Should().BeTrue();
-        configuration.IsScriptDefer.Should().BeTrue();
+        configuration.ScriptMode.Should().Be(ScriptMode.Module);
     }
 
     [Test]
@@ -25,7 +24,7 @@ public class ViteConfigurationTests
         // Act
         builder.WithDefaultAssets("foo");
         builder.WithDevServer("http://localhost:3000");
-        builder.WithScriptOptions(false, false);
+        builder.WithScriptMode(ScriptMode.Classic);
         builder.AddAsset("foo", new ViteAsset { Src = "foo", File = "foo.js", IsEntry = true });
         builder.Build(configuration);
 
@@ -37,8 +36,7 @@ public class ViteConfigurationTests
         configuration.Assets["foo"].IsEntry.Should().BeTrue();
         configuration.DefaultAssets.Should().BeEquivalentTo(new List<string> { "foo" });
         configuration.ViteDevServerUrl.Should().Be("http://localhost:3000");
-        configuration.IsScriptModule.Should().BeFalse();
-        configuration.IsScriptDefer.Should().BeFalse();
+        configuration.ScriptMode.Should().Be(ScriptMode.Classic);
     }
 
     [Test]

@@ -1,14 +1,13 @@
-using System.Text.Json;
-
 namespace ViteIntegration.Internals;
 
 internal class DefaultViteConfigurationBuilder : IViteConfigurationBuilder
 {
     private readonly Dictionary<string, ViteAsset> assets = new();
-    private readonly List<string> defaultAssets = new();
-    private string? viteDevServerUrl;
-    private bool isScriptModule = true;
-    private bool isScriptDefer = true;
+    private readonly List<string> defaultAssets = [];
+    private Uri? viteDevServerUrl;
+    private ScriptMode scriptMode;
+    private ServeFrom assetServeFrom = ServeFrom.Default;
+    private ServeFrom? tagHelperServeFrom;
 
     public IViteConfigurationBuilder AddAsset(string name, ViteAsset asset)
     {
@@ -24,14 +23,25 @@ internal class DefaultViteConfigurationBuilder : IViteConfigurationBuilder
 
     public IViteConfigurationBuilder WithDevServer(string url)
     {
-        viteDevServerUrl = url;
+        viteDevServerUrl = new Uri(url, UriKind.Absolute);
         return this;
     }
 
-    public IViteConfigurationBuilder WithScriptOptions(bool isModule = true, bool isDefer = true)
+    public IViteConfigurationBuilder WithScriptMode(ScriptMode configureScriptMode)
     {
-        isScriptModule = isModule;
-        isScriptDefer = isDefer;
+        scriptMode = configureScriptMode;
+        return this;
+    }
+
+    public IViteConfigurationBuilder WithAssetsServedFrom(ServeFrom serveFrom)
+    {
+        assetServeFrom = serveFrom;
+        return this;
+    }
+
+    public IViteConfigurationBuilder WithTagHelperAssetsServedFrom(ServeFrom serveFrom)
+    {
+        tagHelperServeFrom = serveFrom;
         return this;
     }
 
@@ -40,7 +50,8 @@ internal class DefaultViteConfigurationBuilder : IViteConfigurationBuilder
         configuration.Assets = assets;
         configuration.DefaultAssets = defaultAssets.ToArray();
         configuration.ViteDevServerUrl = viteDevServerUrl;
-        configuration.IsScriptModule = isScriptModule;
-        configuration.IsScriptDefer = isScriptDefer;
+        configuration.ScriptMode = scriptMode;
+        configuration.AssetServeFrom = assetServeFrom;
+        configuration.TagHelperServeFrom = tagHelperServeFrom;
     }
 }

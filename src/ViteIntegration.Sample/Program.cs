@@ -20,8 +20,14 @@ builder.Services.AddViteIntegration(options => {
     // Optional: Include these assets on every Razor page. This is useful for things like your main entry point, or a shared CSS file.
     options.WithDefaultAssets("assets/site.js");
 
-    // Optional: Configure <script> tag attributes, values shown below are the defaults if you omit this call.
-    options.WithScriptOptions(isModule: true, isDefer: true);
+    // Optional: Configure <script> tag rendering, value shown below are the defaults if you omit this call.
+    options.WithScriptMode(ScriptMode.Module);
+
+    // Optional: Configure where default assets are served from
+    options.WithAssetsServedFrom(ServeFrom.Default);
+
+    // Optional: Configure where tag helper-referenced assets are served from
+    options.WithTagHelperAssetsServedFrom(ServeFrom.Default);
 });
 
 WebApplication app = builder.Build();

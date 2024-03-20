@@ -9,12 +9,17 @@ namespace ViteIntegration.TagHelpers;
 /// Tag helper for vite-src
 /// </summary>
 [HtmlTargetElement(Attributes = AttributeName)]
-public class ViteSrcTagHelper : ViteBaseTagHelper
+public class ViteSrcTagHelper : TagHelper
 {
     private const string AttributeName = "vite-src";
 
+    private readonly IViteAssetService viteAssetService;
+
     /// <inheritdoc />
-    public ViteSrcTagHelper(IOptions<ViteConfiguration> configuration, IHostEnvironment hostEnvironment) : base(configuration, hostEnvironment) { }
+    public ViteSrcTagHelper(IViteAssetService viteAssetService)
+    {
+        this.viteAssetService = viteAssetService ?? throw new ArgumentNullException(nameof(viteAssetService));
+    }
 
     /// <summary>
     /// Vite asset URL
@@ -26,7 +31,7 @@ public class ViteSrcTagHelper : ViteBaseTagHelper
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {
         output.Attributes.RemoveAll(AttributeName);
-        if (!TryGetViteUrl(ViteSrc, out string? url)) throw new InvalidOperationException("Asset not found: " + ViteSrc);
-        output.Attributes.SetAttribute("src", url);
+        if (!viteAssetService.TryGetAsset(ViteSrc, out ViteAsset? asset)) throw new InvalidOperationException("Asset not found: " + ViteSrc);
+        output.Attributes.SetAttribute("src", viteAssetService.GetAssetUrlForTagHelper(asset));
     }
 }

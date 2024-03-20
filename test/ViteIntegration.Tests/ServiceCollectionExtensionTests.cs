@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using ViteIntegration.Internals;
 
 namespace ViteIntegration.Tests;
 
@@ -10,13 +11,13 @@ public class ServiceCollectionExtensionTests
     public void Test_AddViteIntegration()
     {
         // Arrange
-        ServiceCollection services = new();
+        ServiceCollection services = [];
 
         // Act
         services.AddViteIntegration();
 
         // Assert
         services.Should().Contain(sd => sd.ServiceType == typeof(ITagHelperComponent) && sd.Lifetime == ServiceLifetime.Transient);
-        services.Should().Contain(sd => sd.ServiceType == typeof(IConfigureOptions<ViteConfiguration>) && sd.Lifetime == ServiceLifetime.Singleton);
+        services.Should().Contain(sd => sd.ServiceType == typeof(IViteAssetService) && sd.Lifetime == ServiceLifetime.Singleton);
     }
 }

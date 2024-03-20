@@ -30,8 +30,21 @@ public interface IViteConfigurationBuilder
     /// <summary>
     /// Configure options for &lt;script&gt; tags
     /// </summary>
-    /// <param name="isModule">True to set type="module", false to set type="text/javascript"</param>
-    /// <param name="isDefer">True to include the "defer" attribute</param>
+    /// <param name="scriptMode"><see cref="ScriptMode"/></param>
     /// <returns>This configuration, for chaining</returns>
-    IViteConfigurationBuilder WithScriptOptions(bool isModule = true, bool isDefer = true);
+    IViteConfigurationBuilder WithScriptMode(ScriptMode scriptMode);
+
+    /// <summary>
+    /// How to serve assets referenced by <see cref="ViewContextExtensions.RequireViteAssets"/> and <see cref="IViteConfigurationBuilder.WithDefaultAssets"/>
+    /// </summary>
+    /// <param name="serveFrom"><see cref="ServeFrom"/></param>
+    /// <returns>This configuration, for chaining</returns>
+    IViteConfigurationBuilder WithAssetsServedFrom(ServeFrom serveFrom);
+
+    /// <summary>
+    /// How to serve assets referenced by tag helpers
+    /// </summary>
+    /// <param name="serveFrom"><see cref="ServeFrom"/></param>
+    /// <returns>This configuration, for chaining</returns>
+    IViteConfigurationBuilder WithTagHelperAssetsServedFrom(ServeFrom serveFrom);
 }

@@ -19,8 +19,12 @@ public static class ServiceCollectionExtensions
     {
         DefaultViteConfigurationBuilder configurationBuilder = new();
         configurationAction?.Invoke(configurationBuilder);
-        services.AddOptions<ViteConfiguration>().Configure(configurationBuilder.Build);
+        services.AddOptions<ViteConfiguration>()
+            .Configure(configurationBuilder.Build)
+            .Validate(configuration => configuration is { AssetServeFrom: ServeFrom.ViteDevServer, ViteDevServerUrl: null }, "ViteDevServerUrl is required when using ServeFrom.ViteDevServer for WithAssetsServedFrom()")
+            .Validate(configuration => configuration is { TagHelperServeFrom: ServeFrom.ViteDevServer, ViteDevServerUrl: null }, "ViteDevServerUrl is required when using ServeFrom.ViteDevServer for WithTagHelperAssetsServedFrom()");
         services.AddTransient<ITagHelperComponent, AssetTagHelperComponent>();
+        services.AddSingleton<IViteAssetService, DefaultViteAssetService>();
         return services;
     }
 }
